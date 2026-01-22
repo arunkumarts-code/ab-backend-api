@@ -27,6 +27,10 @@ export const authMiddleware = async (req: AuthRequest, res: Response, next: Next
          return res.status(401).json({ message: "User not registered" });
       }
 
+      if (!user.isActive) {
+         return res.status(401).json({ message: "User account is inactive" });
+      }
+
       req.user = {
          fbUser: decodedToken,
          dbUser: user,

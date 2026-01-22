@@ -14,16 +14,25 @@ export const login = async(req: Request, res: Response) => {
    try {
       const decoded = await admin.auth().verifyIdToken(idToken, true);
 
+      const firstName =
+         decoded.name?.trim() ||
+         decoded.email?.split("@")[0] ||
+         "User";
+
+      const provider = decoded.firebase?.sign_in_provider ?? "password";
+
       // Create or sync user in DB
       const user =await prisma.user.upsert({
          where: { firebaseUid: decoded.uid },
          update: {
             lastLoginAt: new Date(),
+            provider,
          },
          create: {
             firebaseUid: decoded.uid,
             userEmail: decoded.email ?? "",
-            userName: decoded.name ?? "",
+            firstName,
+            provider,
             lastLoginAt: new Date(),
          },
       });
