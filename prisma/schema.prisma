@@ -7,14 +7,16 @@ datasource db {
 }
 
 model User {
-  id          String    @id @default(uuid())
-  firebaseUid String    @unique
-  userEmail   String    @unique
-  firstName   String?
-  lastName    String?
-  lastLoginAt DateTime?
-  provider    String?
-  createdAt   DateTime  @default(now())
-  modifiedAt  DateTime?
-  isActive    Boolean   @default(true)
+  id           String    @id @default(uuid())
+  firebaseUid  String    @unique
+  userEmail    String    @unique
+  userAvatar   String?
+  userNickName String?
+  firstName    String?
+  lastName     String?
+  lastLoginAt  DateTime?
+  provider     String?
+  createdAt    DateTime  @default(now())
+  modifiedAt   DateTime?
+  isActive     Boolean   @default(true)
 }

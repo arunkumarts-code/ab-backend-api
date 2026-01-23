@@ -23,6 +23,8 @@ export const getProfile = async (req: AuthRequest, res: Response) => {
             userEmail: user.userEmail,
             firstName: user.firstName,
             lastName: user.lastName,
+            userAvatar: user.userAvatar,
+            userNickName: user.userNickName,
             provider: user.provider,
             lastLoginAt: user.lastLoginAt,
             createdAt: user.createdAt,
@@ -39,12 +41,12 @@ export const getProfile = async (req: AuthRequest, res: Response) => {
 export const updateProfile = async (req: AuthRequest, res: Response) => {
    try {
       const firebaseUid = req.user.fbUser.uid;
-      const { firstName, lastName } = req.body;
+      const { firstName, lastName, userNickName } = req.body;
 
-      if (!firstName && !lastName) {
+      if (!firstName && !lastName && !userNickName) {
          return res.status(400).json({
             success: false,
-            message: "Please provide firstName or lastName to update",
+            message: "Please provide valid user data (firstName, lastName, userNickName) to update",
          });
       }
 
@@ -53,6 +55,7 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
          data: {
             ...(firstName && { firstName }),
             ...(lastName && { lastName }),
+            ...(userNickName && { userNickName }),
             modifiedAt: new Date(),
          },
       });
@@ -63,6 +66,7 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
          data: {
             firstName: updatedUser.firstName,
             lastName: updatedUser.lastName,
+            userNickName: updatedUser.userNickName,
          },
       });
    } catch (error) {
@@ -72,6 +76,41 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
       });
    }
 };
+
+export const updateAvatar = async (req: AuthRequest, res: Response) => {
+   try {
+      const firebaseUid = req.user.fbUser.uid;
+      const { userAvatar } = req.body;
+
+      if (!userAvatar) {
+         return res.status(400).json({
+            success: false,
+            message: "Please provide valid userAvatar to update",
+         });
+      }
+
+      const updatedUser = await prisma.user.update({
+         where: { firebaseUid },
+         data: {
+            ...(userAvatar && { userAvatar }),
+            modifiedAt: new Date(),
+         },
+      });
+
+      res.json({
+         success: true,
+         message: "Profile avatar updated successfully",
+         data: {
+            userAvatar: updatedUser.userAvatar,
+         },
+      });
+   } catch (error) {
+      res.status(500).json({
+         success: false,
+         message: "Failed to update profile avatar",
+      });
+   }
+}
 
 export const deleteProfile = async (req: AuthRequest, res: Response) => {
    try {
