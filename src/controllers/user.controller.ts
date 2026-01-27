@@ -116,7 +116,7 @@ export const deleteProfile = async (req: AuthRequest, res: Response) => {
    try {
       const firebaseUid = req.user.fbUser.uid;
 
-      const deletedUser = await prisma.user.update({
+      await prisma.user.update({
          where: { firebaseUid },
          data: {
             isActive: false,

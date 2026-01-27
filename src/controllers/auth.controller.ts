@@ -13,15 +13,18 @@ export const login = async(req: Request, res: Response) => {
 
    try {
       const decoded = await admin.auth().verifyIdToken(idToken, true);
-
-      const firstName =
-         decoded.name?.trim() ||
-         decoded.email?.split("@")[0] ||
-         "User";
-
       const provider = decoded.firebase?.sign_in_provider ?? "password";
 
-      const userAvatar = "/avatar-images/74.png";
+      if (!decoded.email) {
+         return res.status(400).json({ message: "Email not found in token" });
+      }
+
+      const fallbackName =
+         decoded.name ??
+         decoded.email
+            .split("@")[0]
+            .replace(/[._]/g, " ")
+            .replace(/\b\w/g, c => c.toUpperCase());
 
       // Create or sync user in DB
       const user =await prisma.user.upsert({
@@ -32,11 +35,11 @@ export const login = async(req: Request, res: Response) => {
          },
          create: {
             firebaseUid: decoded.uid,
-            userEmail: decoded.email ?? "",
-            userAvatar,
-            firstName,
-            provider,
+            userEmail: decoded.email,
+            userAvatar: "/avatar-images/74.png",
+            firstName: fallbackName,
             lastLoginAt: new Date(),
+            provider,
          },
       });
       console.log("User logged in:", user);
@@ -48,6 +51,7 @@ export const login = async(req: Request, res: Response) => {
             userEmail: user.userEmail,
             firstName: user.firstName,
             lastName: user.lastName,
+            userAvatar: user.userAvatar,
             userNickName: user.userNickName,
             provider: user.provider,
             lastLoginAt: user.lastLoginAt,

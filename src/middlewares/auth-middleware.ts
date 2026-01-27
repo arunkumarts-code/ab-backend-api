@@ -16,19 +16,15 @@ export const authMiddleware = async (req: AuthRequest, res: Response, next: Next
 
       const token = authHeader.split(" ")[1];
    
-      const decodedToken = await admin.auth().verifyIdToken(token);
+      const decodedToken = await admin.auth().verifyIdToken(token, true);
       const firebaseUid = decodedToken.uid;
 
       const user = await prisma.user.findUnique({
-         where: { firebaseUid },
+         where: { firebaseUid, isActive: true },
       });
 
       if (!user) {
-         return res.status(401).json({ message: "User not registered" });
-      }
-
-      if (!user.isActive) {
-         return res.status(401).json({ message: "User account is inactive" });
+         return res.status(401).json({ message: "Unauthorized" });
       }
 
       req.user = {
