@@ -1,7 +1,7 @@
 import { Router } from "express";
-import routes from "../routes";
+import routes from "../api/routes";
 import { authMiddleware } from "./auth-middleware";
-import authRoutes from "../routes/auth.routes";
+import authRoutes from "../api/routes/auth.route";
 
 const router = Router();
 

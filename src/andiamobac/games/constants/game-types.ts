@@ -1,0 +1,4 @@
+export const GAME_TYPE = {
+   COCOA_BEACH: "e9bfb121-f43f-4920-a787-ef3bb6997f08",
+   DARK_SMOKE: "5d0de929-0a27-45a7-8811-443856875995",
+}

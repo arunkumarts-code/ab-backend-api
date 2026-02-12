@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
-import admin from "../configs/firebaseAdmin.config";
-import { prisma } from "../configs/prisma";
+import admin from "../../configs/firebaseAdmin.config";
+import { prisma } from "../../configs/prisma";
+import { MM_TYPES } from "../../andiamobac/money-management/constants/mm-types";
+import { GAME_TYPE } from "../../andiamobac/games/constants/game-types";
 
 export const login = async(req: Request, res: Response) => {
    const authHeader = req.headers.authorization;
@@ -40,6 +42,11 @@ export const login = async(req: Request, res: Response) => {
             firstName: fallbackName,
             lastLoginAt: new Date(),
             provider,
+            defaultMMId: MM_TYPES.RAGNAR_MM,
+            defaultGameId: GAME_TYPE.COCOA_BEACH,
+            defaultBaseUnit: 10,
+            defaultStartingBalance: 300,
+            uCurrentBalance: 300,
          },
       });
       console.log("User logged in:", user);
@@ -54,6 +61,11 @@ export const login = async(req: Request, res: Response) => {
             userAvatar: user.userAvatar,
             userNickName: user.userNickName,
             provider: user.provider,
+            defaultMMId: user.defaultMMId,
+            defaultGameId: user.defaultGameId,
+            defaultBaseUnit: user.defaultBaseUnit,
+            defaultStartingBalance: user.defaultStartingBalance,
+            uCurrentBalance: user.uCurrentBalance,
             lastLoginAt: user.lastLoginAt,
             createdAt: user.createdAt,
          },

@@ -1,6 +1,6 @@
 import { Response } from "express";
-import { AuthRequest } from "../middlewares/auth-middleware";
-import { prisma } from "../configs/prisma";
+import { AuthRequest } from "../../middlewares/auth-middleware";
+import { prisma } from "../../configs/prisma";
 
 export const getProfile = async (req: AuthRequest, res: Response) => {
    try {
@@ -26,6 +26,11 @@ export const getProfile = async (req: AuthRequest, res: Response) => {
             userAvatar: user.userAvatar,
             userNickName: user.userNickName,
             provider: user.provider,
+            defaultMMId: user.defaultMMId,
+            defaultGameId: user.defaultGameId,
+            defaultBaseUnit: user.defaultBaseUnit,
+            defaultStartingBalance: user.defaultStartingBalance,
+            uCurrentBalance: user.uCurrentBalance,
             lastLoginAt: user.lastLoginAt,
             createdAt: user.createdAt,
          },

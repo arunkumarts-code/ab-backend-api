@@ -7,16 +7,46 @@ datasource db {
 }
 
 model User {
-  id           String    @id @default(uuid())
-  firebaseUid  String    @unique
-  userEmail    String    @unique
-  userAvatar   String?
-  userNickName String?
-  firstName    String?
-  lastName     String?
-  lastLoginAt  DateTime?
-  provider     String?
-  createdAt    DateTime  @default(now())
-  modifiedAt   DateTime?
-  isActive     Boolean   @default(true)
+  uId                    String    @id @default(uuid())
+  firebaseUid            String    @unique
+  userEmail              String    @unique
+  userAvatar             String?
+  userNickName           String?
+  firstName              String?
+  lastName               String?
+  lastLoginAt            DateTime?
+  provider               String?
+  defaultMMId            String
+  defaultGameId          String
+  defaultBaseUnit        Int
+  defaultStartingBalance Int
+  uCurrentBalance       Int
+
+  gameProfits Json @default("[]")
+  dayProfits  Json @default("[]")
+
+  createdAt  DateTime  @default(now())
+  modifiedAt DateTime?
+  isActive   Boolean   @default(true)
+
+  userGames UserGame[]
+}
+
+model UserGame {
+  ugId String @id @default(uuid())
+
+  uId  String @unique
+  gmId String 
+  mmId String
+
+  ugBaseUnit        Int
+  ugStartingBalance Int
+
+  ugResultList Json @default("[]")
+
+  createdAt  DateTime  @default(now())
+  modifiedAt DateTime?
+
+  user User @relation(fields: [uId], references: [uId], onDelete: Cascade)
+
 }
