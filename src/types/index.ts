@@ -15,22 +15,9 @@ export type UserType = {
    defaultStartingBalance: number;
    uCurrentBalance: number;
 
-   gameProfits: GameProfit[];
-   dayProfits: DayProfit[];
-
    createdAt: Date;
    modifiedAt?: Date | null;
    isActive: boolean;
-};
-
-export type GameProfit = {
-   gameCount: number;
-   profitAmount: number;
-};
-
-export type DayProfit = {
-   date: Date;
-   profitAmount: number;
 };
 
 export type GameData = {

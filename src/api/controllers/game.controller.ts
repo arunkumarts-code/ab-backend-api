@@ -1,7 +1,7 @@
 import { Response } from "express";
 import { AuthRequest } from "../../middlewares/auth-middleware";
 import { prisma } from "../../configs/prisma";
-import { GameData, GameProfit } from "../../types";
+import { GameData } from "../../types";
 import { GAME_TYPE } from "../../andiamobac/games/constants/game-types";
 import { GAME_LISTES } from "../../andiamobac/games/constants/game-lists";
 import { NextPredictionAndBet } from "../../andiamobac/common/prediction-and-bet";
@@ -263,7 +263,7 @@ export const addHand = async (req: AuthRequest, res: Response) => {
 export const newGame = async (req: AuthRequest, res: Response) => {
    try {
       const firebaseUid = req.user.fbUser.uid;
-      const {GameID, MMID, BaseUnit} = req.body;
+      const { GameID, MMID, BaseUnit } = req.body;
 
       const user = await prisma.user.findUnique({
          where: { firebaseUid },
@@ -276,7 +276,7 @@ export const newGame = async (req: AuthRequest, res: Response) => {
          });
       }
 
-      let gameResults = await prisma.userGame.findUnique({
+      const gameResults = await prisma.userGame.findUnique({
          where: { uId: user.uId },
       });
 
@@ -287,39 +287,88 @@ export const newGame = async (req: AuthRequest, res: Response) => {
          });
       }
 
-      const userGameResult = gameResults?.ugResultList as GameData[] || [];
-      const lastGame = userGameResult.at(-1);
+      const userGameResult =
+         (gameResults.ugResultList as GameData[]) ?? [];
 
-      const lastBalance =
-         (lastGame?.CurrentBalance ?? 0) === 0
-            ? Math.max(
-               user.uCurrentBalance ?? 0,
-               user.defaultStartingBalance ?? 0
-            )
-            : Math.max(
-               lastGame?.CurrentBalance ?? 0,
-               user.defaultStartingBalance ?? 0
-            );
-
-      const [, updatedGameResults] =await prisma.$transaction([
-         prisma.user.update({
-            where: { firebaseUid },
-            data: {
-               uCurrentBalance: lastBalance,
-            },
-         }),
-
-         prisma.userGame.update({
+      if (userGameResult.length === 0) {
+         const updatedGameResults = await prisma.userGame.update({
             where: { uId: user.uId },
             data: {
                ...(GameID && { gmId: GameID }),
                ...(MMID && { mmId: MMID }),
                ...(BaseUnit && { ugBaseUnit: BaseUnit }),
-               ugResultList: [],
-               ugStartingBalance: lastBalance,
             },
-         }),
-      ]);
+         });
+
+         return res.json({
+            success: true,
+            data: {
+               gmId: updatedGameResults.gmId,
+               mmId: updatedGameResults.mmId,
+               ugBaseUnit: updatedGameResults.ugBaseUnit,
+               ugStartingBalance: updatedGameResults.ugStartingBalance,
+               ugResultList: updatedGameResults.ugResultList,
+            },
+         });
+      }
+
+      const lastGame = userGameResult.at(-1);
+
+      const startingBalance = gameResults.ugStartingBalance ?? 0;
+      const endingBalance = lastGame?.CurrentBalance ?? 0;
+
+      const profit = Number(
+         (endingBalance - startingBalance).toFixed(2)
+      );
+
+      const isWin = profit > 0;
+
+      const lastBalance =
+         endingBalance === 0
+            ? Math.max(
+               user.uCurrentBalance ?? 0,
+               user.defaultStartingBalance ?? 0
+            )
+            : Math.max(
+               endingBalance,
+               user.defaultStartingBalance ?? 0
+            );
+
+      // const yesterday = new Date();
+      // yesterday.setDate(yesterday.getDate() - 1);
+
+      const [, , updatedGameResults] =
+         await prisma.$transaction([
+
+            prisma.user.update({
+               where: { firebaseUid },
+               data: {
+                  uCurrentBalance: lastBalance,
+               },
+            }),
+
+            prisma.gameResult.create({
+               data: {
+                  uId: user.uId,
+                  startingBalance,
+                  endingBalance,
+                  profit,
+                  isWin,
+                  // createdAt: yesterday,
+               },
+            }),
+
+            prisma.userGame.update({
+               where: { uId: user.uId },
+               data: {
+                  ...(GameID && { gmId: GameID }),
+                  ...(MMID && { mmId: MMID }),
+                  ...(BaseUnit && { ugBaseUnit: BaseUnit }),
+                  ugResultList: [],
+                  ugStartingBalance: lastBalance,
+               },
+            }),
+         ]);
 
       return res.json({
          success: true,
@@ -370,9 +419,15 @@ export const undoHand = async (req: AuthRequest, res: Response) => {
       const gameUserData = { mmId: gameResults.mmId, gmId: gameResults.gmId, baseUnit: gameResults.ugBaseUnit };
 
       if (resultList.length === 0) {
-         return res.status(400).json({
-            success: false,
-            message: "No game data to undo",
+         return res.json({
+            success: true,
+            data: {
+               gmId: gameResults.gmId,
+               mmId: gameResults.mmId,
+               ugBaseUnit: gameResults.ugBaseUnit,
+               ugStartingBalance: gameResults.ugStartingBalance,
+               ugResultList: gameResults.ugResultList,
+            },
          });
       }
 
@@ -487,9 +542,15 @@ export const skipHand = async (req: AuthRequest, res: Response) => {
          (gameResults.ugResultList as GameData[]) ?? [];
 
       if (resultList.length === 0) {
-         return res.status(400).json({
-            success: false,
-            message: "No hand to skip",
+         return res.json({
+            success: true,
+            data: {
+               gmId: gameResults.gmId,
+               mmId: gameResults.mmId,
+               ugBaseUnit: gameResults.ugBaseUnit,
+               ugStartingBalance: gameResults.ugStartingBalance,
+               ugResultList: gameResults.ugResultList,
+            },
          });
       }
 
