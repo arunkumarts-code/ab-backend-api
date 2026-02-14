@@ -21,24 +21,29 @@ model User {
   defaultBaseUnit        Int
   defaultStartingBalance Int
   uCurrentBalance        Int
+  uCurrentGameId         String?   @unique
 
   createdAt  DateTime  @default(now())
   modifiedAt DateTime?
   isActive   Boolean   @default(true)
 
-  userGames   UserGame[]
-  gameResults GameResult[]
+  userGames UserGame[]
+
+  @@index([firebaseUid])
 }
 
 model UserGame {
   ugId String @id @default(uuid())
 
-  uId  String @unique
+  uId  String
   gmId String
   mmId String
 
   ugBaseUnit        Int
   ugStartingBalance Int
+  profit            Int?
+  isWin             Boolean?
+  isCompleted       Boolean  @default(false)
 
   ugResultList Json @default("[]")
 
@@ -46,22 +51,8 @@ model UserGame {
   modifiedAt DateTime?
 
   user User @relation(fields: [uId], references: [uId], onDelete: Cascade)
-}
-
-model GameResult {
-  grId String @id @default(uuid())
-
-  uId             String
-  startingBalance Int
-  endingBalance   Int
-  profit          Int
-  isWin           Boolean
-
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [uId], references: [uId], onDelete: Cascade)
 
   @@index([uId])
   @@index([createdAt])
-  @@index([createdAt, uId])
+  @@index([createdAt, uId]) 
 }

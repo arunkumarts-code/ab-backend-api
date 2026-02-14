@@ -35,26 +35,29 @@ export const getProfitGraph = async (req: AuthRequest, res: Response) => {
 
       const { currentStart, previousStart, previousEnd } = getDateRanges(type);
 
-      const currentResults = await prisma.gameResult.findMany({
+      const currentResults = await prisma.userGame.findMany({
          where: {
             uId: user.uId,
+            isCompleted: true,
             createdAt: { gte: currentStart },
          },
          orderBy: { createdAt: "asc" },
          select: { profit: true },
       });
 
-      const currentTotal = await prisma.gameResult.aggregate({
+      const currentTotal = await prisma.userGame.aggregate({
          where: {
             uId: user.uId,
+            isCompleted: true,
             createdAt: { gte: currentStart },
          },
          _sum: { profit: true },
       });
 
-      const previousTotal = await prisma.gameResult.aggregate({
+      const previousTotal = await prisma.userGame.aggregate({
          where: {
             uId: user.uId,
+            isCompleted: true,
             createdAt: {
                gte: previousStart,
                lt: previousEnd,
@@ -96,15 +99,16 @@ export const getTop10Players = async (req: AuthRequest, res: Response) => {
          SELECT 
          u."uId",
          COALESCE(u."userNickName", u."firstName", 'Player') as "player",
-         COUNT(gr."grId") as "totalTrades",
-         SUM(gr."profit") as "totalProfit",
-         SUM(CASE WHEN gr."isWin" = true THEN 1 ELSE 0 END) as "totalWins"
-         FROM "GameResult" gr
-         JOIN "User" u ON u."uId" = gr."uId"
-         WHERE gr."createdAt" >= ${currentStart}
+         COUNT(ug."ugId") as "totalTrades",
+         SUM(ug."profit") as "totalProfit",
+         SUM(CASE WHEN ug."isWin" = true THEN 1 ELSE 0 END) as "totalWins"
+         FROM "UserGame" ug
+         JOIN "User" u ON u."uId" = ug."uId"
+         WHERE ug."createdAt" >= ${currentStart}
+         AND ug."isCompleted" = true
          GROUP BY u."uId", u."userNickName", u."firstName"
-          HAVING SUM(gr."profit") > 0
-         ORDER BY SUM(gr."profit") DESC
+         HAVING SUM(ug."profit") > 0
+         ORDER BY "totalProfit" DESC
          LIMIT 10
       `;
 
@@ -151,7 +155,7 @@ export const getLiveWins = async (
          u."userAvatar" as "avatar",
          gr."profit" as "amount",
          gr."createdAt" as "time"
-         FROM "GameResult" gr
+         FROM "UserGame" gr
          JOIN "User" u ON u."uId" = gr."uId"
          WHERE gr."isWin" = true
          ORDER BY gr."createdAt" DESC
